@@ -389,7 +389,13 @@
     if (module && module.exports) exports = module.exports = validate;
     exports.validate = validate;
   }
-  else root.validate = validate;
+  else {
+    root.validate = validate;
+
+    if ( typeof define === "function" && define.amd ) {
+      define( "validate", [], function () { return validate; } );
+    }
+  }
 }).call(this,
         typeof exports !== 'undefined' ? exports : null,
         typeof module !== 'undefined' ? module : null);
