@@ -788,7 +788,13 @@ output.</p>
     <span class="keyword">if</span> (module &amp;&amp; module.exports) exports = module.exports = validate;
     exports.validate = validate;
   }
-  <span class="keyword">else</span> root.validate = validate;
+  <span class="keyword">else</span> {
+    root.validate = validate;
+
+    <span class="keyword">if</span> ( <span class="keyword">typeof</span> define === <span class="string">"function"</span> &amp;&amp; define.amd ) {
+      define( <span class="string">"validate"</span>, [], <span class="function"><span class="keyword">function</span> <span class="params">()</span> {</span> <span class="keyword">return</span> validate; } );
+    }
+  }
 }).call(<span class="keyword">this</span>,
         <span class="keyword">typeof</span> exports !== <span class="string">'undefined'</span> ? exports : <span class="literal">null</span>,
         <span class="keyword">typeof</span> module !== <span class="string">'undefined'</span> ? module : <span class="literal">null</span>);</pre></div></div>
