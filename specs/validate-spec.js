@@ -143,6 +143,88 @@ describe("validate", function() {
       validate.runValidations({}, {name: {pass: false}, email: {pass: null}}, {});
       expect(pass).not.toHaveBeenCalled();
     });
+
+    it("validates objects nested one level deep", function() {
+      fail.andReturn("error");
+
+      var attributes = {
+        home: {
+          postal_code: "94101"
+        }
+      };
+
+      var constraints = {
+        home: {
+          properties: {
+            postal_code: { pass: true },
+          },
+          fail: true
+        }
+      };
+
+      var result = validate.runValidations(attributes, constraints, {});
+
+      expect(result).toHaveItems([{
+        attribute: "home",
+        error: "error"
+      }, {
+        attribute: "home.postal_code",
+        error: undefined
+      }]);
+    });
+
+    it("validates objects nested two levels deep", function() {
+      var attributes = {
+        address: {
+          home: {
+            postal_code: "94101"
+          },
+          work: {
+            postal_code: "94301"
+          }
+        }
+      };
+
+      var constraints = {
+        address: {
+          pass: true,
+          properties: {
+            home: {
+              properties: {
+                postal_code: { pass: true },
+              },
+              fail: true
+            },
+            work: {
+              properties: {
+                postal_code: { fail: true },
+              },
+              pass: true
+            }
+          }
+        }
+      };
+
+      fail.andReturn("error");
+      var result = validate.runValidations(attributes, constraints, {});
+
+      expect(result).toHaveItems([{
+        attribute: "address",
+        error: undefined
+      }, {
+        attribute: "address.home",
+        error: "error"
+      }, {
+        attribute: "address.home.postal_code",
+        error: undefined
+      }, {
+        attribute: "address.work",
+        error: undefined
+      }, {
+        attribute: "address.work.postal_code",
+        error: "error"
+      }]);
+    });
   });
 
   describe("processValidationResults", function() {

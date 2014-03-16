@@ -50,19 +50,30 @@
     // Will return an array of the format:
     //     [{attribute: "<attribute name>", error: "<validation result>"}, ...]
     runValidations: function(attributes, constraints, options) {
-      var results = []
-        , attr
+      return v.validateRecursively(attributes, constraints, null);
+    },
+
+    // Runs the validators for an object and its sub-objects
+    // Will return an array of the format:
+    //     [{attribute: "<dotted attribute name>", error: "<validation result>"}, ...]
+    validateRecursively: function(input, constraints, prefix) {
+      var attr
+        , counter
         , validatorName
         , value
         , validators
         , validator
         , validatorOptions
+        , validatorResult
+        , validatorResults
+        , results = []
+        , newPrefix
         , error;
 
       // Loops through each constraints, finds the correct validator and run it.
       for (attr in constraints) {
-        value = attributes[attr];
-        validators = v.result(constraints[attr], value, attributes, attr);
+        value = input[attr];
+        validators = v.result(constraints[attr], value, input, attr);
 
         for (validatorName in validators) {
           validator = v.validators[validatorName];
@@ -77,16 +88,35 @@
           // called with the value, attribute name and the complete dict of
           // attributes. This is useful when you want to have different
           // validations depending on the attribute value.
-          validatorOptions = v.result(validatorOptions, value, attributes, attr);
+          validatorOptions = v.result(validatorOptions, value, input, attr);
           if (!validatorOptions) continue;
-          results.push({
-            attribute: attr,
-            error: validator.call(validator, value, validatorOptions, attr,
-                                  attributes)
-          });
+
+          validatorResults = validator.call(validator, value, validatorOptions, attr, input);
+
+          // If the result is the raw result from a normal validator, flesh it
+          // out to "look" like the result from this function.
+          if (!v.isArray(validatorResults) || !validatorResults.recursiveResult) {
+            validatorResults = [{
+              attribute: attr,
+              error: validatorResults
+            }];
+          }
+
+          for (counter = 0; counter < validatorResults.length; counter++) {
+            validatorResult = validatorResults[counter];
+            newPrefix = prefix? prefix + ".": "";
+
+            results.push({
+              attribute: newPrefix + validatorResult.attribute,
+              error: validatorResult.error
+            });
+          }
         }
       }
 
+      // A marker so that we know to update these entries at outer levels of
+      // recursion
+      results.recursiveResult = true;
       return results;
     },
 
@@ -377,6 +407,14 @@
   });
 
   validate.validators = {
+    properties: function(value, options, attr, input) {
+      return v.validateRecursively(
+        value,
+        options,
+        attr
+      );
+    },
+
     // Presence validates that the value isn't empty
     presence: function(value, options) {
       var message = options.message || "can't be blank"
