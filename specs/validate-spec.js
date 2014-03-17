@@ -225,6 +225,145 @@ describe("validate", function() {
         error: "error"
       }]);
     });
+
+    it("handles one level deep objects with missing content", function() {
+      var attributes = {
+        address: {
+        }
+      };
+
+      var constraints = {
+        address: {
+          properties: {
+            home: {
+              fail: true
+            }
+          }
+        }
+      };
+
+      fail.andReturn("error");
+      var result = validate.runValidations(attributes, constraints, {});
+
+      expect(result).toHaveItems([{
+        attribute: "address.home",
+        error: "error"
+      }]);
+    });
+
+    it("handles two level deep objects with missing content", function() {
+      var attributes = {
+        address: {
+        }
+      };
+
+      var constraints = {
+        address: {
+          pass: true,
+          properties: {
+            home: {
+              properties: {
+                postal_code: { fail: true }
+              }
+            }
+          }
+        }
+      };
+
+      fail.andReturn("error");
+      var result = validate.runValidations(attributes, constraints, {});
+
+      expect(result).toHaveItems([{
+        attribute: "address",
+        error: undefined
+      }]);
+    });
+
+    it("handles objects with missing content", function() {
+      var attributes = {
+        address: {
+        }
+      };
+
+      var constraints = {
+        address: {
+          pass: true,
+          properties: {
+            home: {
+              properties: {
+                postal_code: {
+                  pass: true
+                }
+              }
+            },
+            work: {
+              fail: true
+            }
+          }
+        }
+      };
+
+      fail.andReturn("error");
+      var result = validate.runValidations(attributes, constraints, {});
+
+      expect(result).toHaveItems([{
+        attribute: "address",
+        error: undefined
+      }, {
+        attribute: "address.work",
+        error: 'error'
+      }]);
+    });
+
+    it("handles objects with extra attributes", function() {
+      var attributes = {
+        address: {
+          school: {}
+        }
+      };
+
+      var constraints = {
+        address: {
+          properties: { }
+        }
+      };
+
+      fail.andReturn("error");
+      var result = validate.runValidations(attributes, constraints, {});
+
+      expect(result).toHaveItems([{
+        attribute: "address.school",
+        error: "was not expected"
+      }]);
+    });
+
+    it("handles objects with extra attributes two levels deep", function() {
+      var attributes = {
+        address: {
+          work: {
+            number: 42
+          }
+        }
+      };
+
+      var constraints = {
+        address: {
+          properties: {
+            work: {
+              properties: { }
+            }
+          }
+        }
+      };
+
+      fail.andReturn("error");
+      var result = validate.runValidations(attributes, constraints, {});
+
+      expect(result).toHaveItems([{
+        attribute: "address.work.number",
+        error: "was not expected"
+      }]);
+    });
   });
 
   describe("processValidationResults", function() {

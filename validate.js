@@ -96,20 +96,17 @@
           // If the result is the raw result from a normal validator, flesh it
           // out to "look" like the result from this function.
           if (!v.isArray(validatorResults) || !validatorResults.recursiveResult) {
-            validatorResults = [{
-              attribute: attr,
-              error: validatorResults
-            }];
+            validatorResults = [ v.validationResult("", attr, validatorResults) ];
           }
 
           for (counter = 0; counter < validatorResults.length; counter++) {
             validatorResult = validatorResults[counter];
-            newPrefix = prefix? prefix + ".": "";
 
-            results.push({
-              attribute: newPrefix + validatorResult.attribute,
-              error: validatorResult.error
-            });
+            results.push(v.validationResult(
+              prefix,
+              validatorResult.attribute,
+              validatorResult.error
+            ));
           }
         }
       }
@@ -382,6 +379,15 @@
       }
     },
 
+    validationResult: function(prefix, attr, error) {
+      prefix = prefix? prefix + ".": "";
+
+      return {
+        attribute: prefix + attr,
+        error: error
+      };
+    },
+
     require: require,
 
     exposeModule: function(validate, root, exports, module, define) {
@@ -407,12 +413,35 @@
   });
 
   validate.validators = {
-    properties: function(value, options, attr, input) {
-      return v.validateRecursively(
-        value,
-        options,
-        attr
-      );
+    // Properties lets you run validations on nested objects
+    properties: function(value, options, attr) {
+      var resultsFromThisObject = []
+        , resultsFromRecursion = []
+        , result
+        , counter
+        , propertyName
+        , propertyNames;
+
+      if (value !== null && typeof value === 'object') {
+        propertyNames = Object.keys(value);
+
+        // Check for unexpected properties
+        for (counter = 0; counter < propertyNames.length; counter++) {
+          propertyName = propertyNames[counter];
+          if (!options.hasOwnProperty(propertyName)) {
+            resultsFromThisObject.push(
+              v.validationResult(attr, propertyName, "was not expected")
+            );
+          }
+        }
+
+        // Apply validations recursively, into property values
+        resultsFromRecursion = v.validateRecursively(value, options, attr);
+      }
+
+      result = resultsFromThisObject.concat(resultsFromRecursion);
+      result.recursiveResult = true;
+      return result;
     },
 
     // Presence validates that the value isn't empty
