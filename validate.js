@@ -15,6 +15,16 @@
   // Please note that the options are also passed to each validator.
   var validate = function(attributes, constraints, options) {
     options = options || {};
+    
+    // Allows a single primitive to be validated against an single set of validators easily
+    // ex: validate('example@email.com', {presence: true, email: true});
+    if (typeof(attributes) !== 'object') {
+      attributes = {single: attributes};
+      constraints = {single: constraints};
+      options.fullMessages = false;
+      options.flatten = true;
+    }
+
     var results = v.runValidations(attributes, constraints, options)
       , attr
       , validator;
