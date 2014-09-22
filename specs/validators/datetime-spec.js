@@ -1,5 +1,5 @@
 describe('validators.datetime', function() {
-  var datetime = validate.validators.datetime.bind(validate.validators.datetime)
+  var datetime = validate.validators.datetime.bind(validate.validators)
     , XDate = window.XDate;
 
   afterEach(function() {

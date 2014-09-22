@@ -618,10 +618,10 @@
       var err
         , errors = []
         , message = options.message
-        , earliest = options.earliest ? this.parse(options.earliest, options) : NaN
-        , latest = options.latest ? this.parse(options.latest, options) : NaN;
+        , earliest = options.earliest ? this.datetime.parse(options.earliest, options) : NaN
+        , latest = options.latest ? this.datetime.parse(options.latest, options) : NaN;
 
-      value = this.parse(value, options);
+      value = this.datetime.parse(value, options);
 
       if (isNaN(value) || options.dateOnly && value % 86400000 !== 0) {
         return message || "must be a valid date";
@@ -629,13 +629,13 @@
 
       if (!isNaN(earliest) && value < earliest) {
         err = "must be no earlier than %{date}";
-        err = v.format(err, {date: this.format(earliest, options)});
+        err = v.format(err, {date: this.datetime.format(earliest, options)});
         errors.push(err);
       }
 
       if (!isNaN(latest) && value > latest) {
         err = "must be no later than %{date}";
-        err = v.format(err, {date: this.format(latest, options)});
+        err = v.format(err, {date: this.datetime.format(latest, options)});
         errors.push(err);
       }
 
